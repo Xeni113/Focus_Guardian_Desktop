@@ -1,3 +1,4 @@
+# Logs & Temp
 logs
 *.log
 npm-debug.log*
@@ -5,19 +6,28 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+cargo_errors.txt
+.env
+.env.*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Node / Web Build
+node_modules/
+dist/
+dist-ssr/
+.bolt/
 
+# Rust Build Targets (CRITICAL)
+/src-tauri/target/
+**/target/
+
+# IDE & OS Files
+.DS_Store
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
+*.user
