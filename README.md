@@ -1,4 +1,4 @@
-<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/929b8e72-3226-4f9a-98c2-51925e50d350" /># FocusGuardian 🛡️
+ #FocusGuardian 🛡️
 
 > A high-performance, low-footprint desktop productivity guardian built with Rust and React.
 
