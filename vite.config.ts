@@ -13,4 +13,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  // Prevent Vite from watching Rust build artifacts to stop file lock conflicts (EBUSY)
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: {
+      ignored: ["**/src-tauri/**"],
+    },
+  },
 });
