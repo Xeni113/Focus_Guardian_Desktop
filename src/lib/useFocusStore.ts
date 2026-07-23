@@ -1,3 +1,31 @@
+import type { AttentionAnalysis } from '@/lib/ai/attentionPredictor';
+
+// 1. Inside FocusStore interface:
+export interface FocusStore {
+  // ... existing fields
+  attentionAnalysis: AttentionAnalysis | null;
+  setAttentionAnalysis: (analysis: AttentionAnalysis | null) => void;
+}
+
+// 2. Inside create():
+attentionAnalysis: null,
+  setAttentionAnalysis: (analysis) => set({ attentionAnalysis: analysis }),
+
+// 1. Add to your store interface/type definition
+export interface FocusStore {
+  // ... existing store fields
+  aiEvaluation: {
+    similarity: number;
+    classification: 'PRODUCTIVE' | 'NEUTRAL' | 'DISTRACTING';
+    confidence: number;
+  } | null;
+  setAiEvaluation: (evalData: FocusStore['aiEvaluation']) => void;
+}
+
+// 2. Add inside create() initial state:
+aiEvaluation: null,
+  setAiEvaluation: (evalData) => set({ aiEvaluation: evalData }),
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AppCategory,
@@ -253,15 +281,15 @@ export function useFocusStore(): FocusStore {
       const now = Date.now();
       const allSessions = sessionRef.current
         ? [
-            ...stateRef.current.sessions,
-            {
-              title: sessionRef.current.title,
-              category: sessionRef.current.category,
-              startedAt: sessionRef.current.startedAt,
-              endedAt: now,
-              durationMs: now - sessionRef.current.startedAt,
-            },
-          ]
+          ...stateRef.current.sessions,
+          {
+            title: sessionRef.current.title,
+            category: sessionRef.current.category,
+            startedAt: sessionRef.current.startedAt,
+            endedAt: now,
+            durationMs: now - sessionRef.current.startedAt,
+          },
+        ]
         : stateRef.current.sessions;
       const score = computeFocusScore(allSessions, now);
       setLiveFocusScore(score);

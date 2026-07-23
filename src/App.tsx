@@ -19,6 +19,8 @@ import { AppManagement } from '@/views/AppManagement';
 import { SettingsView } from '@/views/Settings';
 import { Landing } from '@/views/Landing';
 import { cn } from '@/lib/utils';
+import { evaluateActivity, initSemanticEngine } from '@/lib/ai/semanticClassifier';
+import { inferAttentionState } from '@/lib/ai/attentionPredictor';
 
 const NAV: { key: ViewKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,6 +33,62 @@ export default function App() {
   const store = useFocusStore();
   const [view, setView] = useState<ViewKey>('dashboard');
   const [route, setRoute] = useState<'app' | 'landing'>('app');
+
+  // Initialize local AI pipeline on boot
+  useEffect(() => {
+    initSemanticEngine().catch((err) =>
+      console.error('[FocusGuardian AI] Failed to initialize classifier:', err)
+    );
+  }, []);
+
+  // Background Semantic & Attention Evaluation Loop
+  useEffect(() => {
+    const windowTitle = store.activeWindow?.title;
+    const currentGoal = store.currentGoal || 'Productive Work & Study';
+
+    if (!windowTitle) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        // 1. Compute local semantic embedding match
+        const result = await evaluateActivity(currentGoal, windowTitle);
+
+        store.setAiEvaluation({
+          similarity: result.similarity,
+          classification: result.classification,
+          confidence: result.confidence,
+        });
+
+        // 2. Infer attention state & drift risk using real-time telemetry
+        const switches2Min = store.recentSwitchesCount || 0;
+        const dwellSeconds = store.activeWindowDwellTime || 0;
+        const sessionMins = store.sessionDurationMinutes || 0;
+
+        const attentionResult = inferAttentionState(
+          result.similarity,
+          switches2Min,
+          dwellSeconds,
+          sessionMins
+        );
+
+        store.setAttentionAnalysis(attentionResult);
+
+        console.log('[FocusGuardian AI Analysis]', {
+          windowTitle,
+          currentGoal,
+          similarity: result.similarity,
+          classification: result.classification,
+          attentionState: attentionResult.state,
+          driftRisk: `${Math.round(attentionResult.driftRisk * 100)}%`,
+          reason: attentionResult.reason,
+        });
+      } catch (err) {
+        console.error('[FocusGuardian AI Evaluation Error]', err);
+      }
+    }, 1200); // 1.2s debounce to save CPU cycles on rapid title switches
+
+    return () => clearTimeout(timer);
+  }, [store.activeWindow?.title, store.currentGoal]);
 
   useEffect(() => {
     const sync = () => setRoute(window.location.hash === '#/landing' ? 'landing' : 'app');
@@ -101,7 +159,7 @@ export default function App() {
                     'w-full flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-all',
                     active
                       ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[rgba(45,212,191,0.2)]'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] border border-transparent',
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] border border-transparent'
                   )}
                   title={item.label}
                 >
